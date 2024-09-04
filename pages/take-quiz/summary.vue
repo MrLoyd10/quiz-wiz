@@ -16,7 +16,7 @@ function resetData() {
 
 <template>
   <div class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full m-10">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full m-10 container">
       <div class="mb-10">
         <div class="flex justify-center items-center mb-10">
           <img

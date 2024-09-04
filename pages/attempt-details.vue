@@ -1,52 +1,17 @@
 <script setup lang="ts">
-import axiosInstance from "~/utils/axois";
 import { useViewResultStore } from "~/stores/view-result";
-import { useTakeQuizStore } from "#imports";
+import { useTakeQuizStore } from "~/stores/take-quiz";
 
 // Store Data
 const viewResultStore = useViewResultStore();
 const takeQuizStore = useTakeQuizStore();
 const router = useRouter();
 
-interface AttemptPreview {
-  quiz_id: number;
-  id: number;
-  title: string;
-  description: string;
-  total_score: number;
-  number_of_questions: number;
-  questions: Question[];
-  attempt_data: AttemptData[];
-}
+const { attemptPreview, isLoading, error, fetchAttemptPreview } =
+  useAttemptPreview(viewResultStore.attempt_id);
 
-interface Question {
-  id: number;
-  quiz_id: number;
-  question: string; // Changed from Text to string
-  correct_answer: string;
-  options: any[]; // Changed from JSON to any[]
-}
-
-interface AttemptData {
-  isCorrect: boolean;
-  index: number;
-  selectedIndex: number;
-  correctAnswerIndex: number;
-  questionShuffled: string[];
-}
-
-const attemptPreview = ref<AttemptPreview | null>(null);
-
-onMounted(async () => {
-  try {
-    const response = await axiosInstance.post("/view-attempt", {
-      attempt_id: viewResultStore.attempt_id,
-    });
-    attemptPreview.value = response.data;
-  } catch (error: any) {
-    console.log("Error fetching quiz result:", error.message);
-  }
-  console.log(attemptPreview.value);
+onMounted(() => {
+  fetchAttemptPreview();
 });
 
 function retakeQuiz() {
@@ -55,12 +20,7 @@ function retakeQuiz() {
     return;
   }
 
-  console.log("Quiz ID:", attemptPreview.value.id); // Logging the quiz ID
-  console.log("Title:", attemptPreview.value.title); // Logging the title
-  console.log("Description:", attemptPreview.value.description); // Logging the description
-  console.log("Number of Questions:", attemptPreview.value.questions.length); // Logging the number of questions
-  console.log("Questions:", attemptPreview.value.questions);
-
+  takeQuizStore.forgetData();
   takeQuizStore.setId(attemptPreview.value.quiz_id);
   takeQuizStore.setTitle(attemptPreview.value.title);
   takeQuizStore.setDescription(attemptPreview.value.description);
@@ -72,8 +32,33 @@ function retakeQuiz() {
 
 <template>
   <div class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full m-10">
-      <div v-if="attemptPreview" class="mb-10">
+    <div class="bg-white container p-8 rounded-lg shadow-lg w-full m-10">
+      <!-- Skeleton loaders -->
+      <div v-if="isLoading" class="animate-pulse">
+        <div class="flex justify-center items-center mb-10">
+          <div class="h-16 w-16 bg-gray-300 rounded-full"></div>
+        </div>
+        <p class="h-4 bg-gray-300 rounded w-1/3 mx-auto mb-4"></p>
+        <h1 class="h-6 bg-gray-300 rounded w-2/3 mx-auto mb-2"></h1>
+        <p class="h-4 bg-gray-300 rounded w-1/2 mx-auto mb-4"></p>
+
+        <div v-for="n in 5" :key="n" class="mb-6">
+          <h2 class="h-4 bg-gray-300 rounded w-3/4 mb-2"></h2>
+          <ul class="space-y-2">
+            <li class="h-4 bg-gray-300 rounded w-full"></li>
+            <li class="h-4 bg-gray-300 rounded w-full"></li>
+            <li class="h-4 bg-gray-300 rounded w-full"></li>
+            <li class="h-4 bg-gray-300 rounded w-full"></li>
+          </ul>
+        </div>
+
+        <div class="flex space-x-5 mt-10">
+          <div class="h-10 bg-gray-300 rounded w-full"></div>
+          <div class="h-10 bg-gray-300 rounded w-full"></div>
+        </div>
+      </div>
+
+      <div v-if="attemptPreview && !isLoading" class="mb-10">
         <div class="flex justify-center items-center mb-10">
           <img
             src="/assets/pictures/QuizWiz.png"

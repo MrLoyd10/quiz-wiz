@@ -5,12 +5,15 @@ import { useTakeQuizStore } from "~/stores/take-quiz";
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import axiosInstance from "~/utils/axois";
+import Loading from "vue-loading-overlay";
+import "vue-loading-overlay/dist/css/index.css";
 
 // Store Data
 const router = useRouter();
 const questionsStore = useTakeQuizStore();
 const { title, description, id, totalQuestions, questions } = questionsStore;
 
+const isLoading = ref(true);
 const isQuizStarted = computed(() => questionsStore.isQuizStarted);
 const questionsIndex = ref(0);
 const currentCorrectAnswerIndex = ref(-1);
@@ -27,6 +30,21 @@ const records = ref(
 const totalScore = computed(() =>
   records.value.reduce((acc, q) => acc + (q.isCorrect ? 1 : 0), 0)
 );
+
+// Initialize Data and Options
+onMounted(async () => {
+  try {
+    await nextTick();
+    ({
+      options: currentOptions.value,
+      correctAnswerIndex: currentCorrectAnswerIndex.value,
+    } = shuffleOptions(questions[questionsIndex.value]));
+  } catch (error) {
+    console.error("Error initializing quiz:", error);
+  } finally {
+    isLoading.value = false;
+  }
+});
 
 // Prevent Page Unload
 onMounted(() => window.addEventListener("beforeunload", handleBeforeUnload));
@@ -52,12 +70,6 @@ function shuffleOptions(question: any) {
   return { options, correctAnswerIndex };
 }
 
-// Initialize First Question Options
-({
-  options: currentOptions.value,
-  correctAnswerIndex: currentCorrectAnswerIndex.value,
-} = shuffleOptions(questions[questionsIndex.value]));
-
 // Handle Answer Selection
 async function selectOption(selectedOption: string, selectedIndex: number) {
   const currentQuestion = questions[questionsIndex.value];
@@ -82,7 +94,9 @@ async function selectOption(selectedOption: string, selectedIndex: number) {
     window.removeEventListener("beforeunload", handleBeforeUnload);
     questionsStore.setSummary(records.value);
     questionsStore.setTotalScore(totalScore.value);
+    isLoading.value = true; // Show loader during submission
     await sendQuizAttemptData();
+    isLoading.value = false; // Hide loader once submission is complete
     router.push("/take-quiz/summary");
   }
 }
@@ -102,7 +116,16 @@ async function sendQuizAttemptData() {
 </script>
 
 <template>
-  <div class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div
+    class="bg-gray-100 flex items-center justify-center min-h-screen vl-parent"
+  >
+    <div v-if="isLoading">
+      <loading
+        v-model:active="isLoading"
+        is-full-page
+        background-color="#f3f4f6"
+      />
+    </div>
     <div
       class="bg-white p-8 rounded-lg shadow-lg w-full m-10"
       :class="isQuizStarted ? 'max-w-3xl' : 'max-w-md'"
