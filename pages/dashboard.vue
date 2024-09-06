@@ -2,44 +2,29 @@
 import axiosInstance from "~/utils/axois";
 import { useTakeQuizStore } from "~/stores/take-quiz";
 import { ref, onMounted } from "vue";
+import Loading from "vue-loading-overlay";
+import "vue-loading-overlay/dist/css/index.css";
 
 const Store = useTakeQuizStore();
 
 // Define the Quiz interface
-interface Quiz {
-  id: number;
-  title: string;
-  description: string;
-  number_of_questions: number;
-  questions: Question[];
-}
 
-interface Question {
-  id: number;
-  quiz_id: number;
-  question: string;
-  correct_answer: string;
-  options: any[];
-}
-
-// Define a reactive reference for the quizzes array
-const quizzes = ref<Quiz[]>([]);
-const isLoading = ref(true); // Add a loading state
+const isLoading = ref(true);
+const circleLoading = ref(false);
 const router = useRouter();
+const shareWith = ref([]);
 
-onMounted(async () => {
-  try {
-    const response = await axiosInstance.get("/quizzes");
-    quizzes.value = response.data;
-  } catch (error: any) {
-    console.log(
-      "Failed to fetch quizzes: " +
-        (error.response?.data.message || error.message || "Unknown error")
-    );
-  } finally {
-    isLoading.value = false; // Set loading to false once data is fetched
-  }
-});
+// Composables
+const {
+  quizzes,
+  isSharedModalOpen,
+  selectedQuizIdStore,
+  fetchQuizzes,
+  items,
+  shareQuiz,
+} = useDashboardHelpers(circleLoading, isLoading);
+
+onMounted(fetchQuizzes);
 
 const takeQuiz = (quizIndex: number) => {
   Store.forgetData();
@@ -48,14 +33,43 @@ const takeQuiz = (quizIndex: number) => {
   Store.setDescription(quizzes.value[quizIndex].description);
   Store.setNumberQuestions(quizzes.value[quizIndex].number_of_questions);
   Store.setQuestions(quizzes.value[quizIndex].questions);
-  router.push({ path: `/take-quiz` });
+  router.push({ path: "/take-quiz" });
 };
+
+// Updated items function to include refresh after deletion
+
+function updateShareWith(updatedShareWith: any) {
+  shareWith.value = updatedShareWith;
+}
+
+function hanldeShareQuiz() {
+  shareQuiz(selectedQuizIdStore.value, shareWith.value);
+  isSharedModalOpen.value = false;
+}
 </script>
 
 <template>
   <div>
-    <div class="bg-gray-100 min-h-screen flex flex-col">
+    <div class="bg-gray-100 min-h-screen flex flex-col vl-parent">
+      <!-- Circle loader -->
+      <div v-if="circleLoading">
+        <loading
+          v-model:active="circleLoading"
+          is-full-page
+          background-color="#f3f4f6"
+        />
+      </div>
+
+      <!-- Header -->
       <DashboardHeader />
+
+      <!-- Shared Modal -->
+      <MoleculesShareModal
+        v-model="isSharedModalOpen"
+        :shareWith="shareWith"
+        @update-share-with="updateShareWith"
+        @share="hanldeShareQuiz"
+      />
 
       <div class="flex-grow">
         <div
@@ -75,33 +89,53 @@ const takeQuiz = (quizIndex: number) => {
             </div>
           </template>
 
-          <!-- Loop through quizzes and display each one -->
+          <!-- Main content -->
           <template v-else>
-            <div
-              v-for="(quiz, index) in quizzes"
-              :key="quiz.id"
-              class="bg-white shadow-lg rounded-lg p-6"
-            >
-              <h3 class="text-xl font-semibold text-gray-800 mb-2">
-                {{ quiz.title }}
-              </h3>
-              <p class="text-gray-600 mb-4">{{ quiz.description }}</p>
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-500">
-                  {{ quiz.number_of_questions }} Questions
-                </span>
-                <div class="space-x-3">
-                  <UButton color="primary" variant="ghost" size="lg">
-                    Edit
-                  </UButton>
-                  <UButton
-                    color="primary"
-                    variant="solid"
-                    size="lg"
-                    @click="takeQuiz(index)"
+            <div v-for="(quiz, index) in quizzes" :key="quiz.id">
+              <div class="bg-white shadow-lg rounded-lg p-6 flex flex-col">
+                <div class="flex justify-between items-center">
+                  <h3
+                    class="text-xl font-semibold text-gray-800 mb-2 text-pretty line-clamp-2"
+                    :title="quiz.title"
                   >
-                    Take Quiz
-                  </UButton>
+                    {{ quiz.title }}
+                  </h3>
+                  <div>
+                    <UDropdown
+                      :items="items(quiz.id)"
+                      :popper="{ placement: 'bottom-start' }"
+                    >
+                      <UIcon
+                        name="i-heroicons-ellipsis-vertical"
+                        class="w-6 h-6"
+                      />
+                    </UDropdown>
+                  </div>
+                </div>
+
+                <p
+                  class="text-gray-600 mb-4 text-pretty line-clamp-2"
+                  :title="quiz.description"
+                >
+                  {{ quiz.description }}
+                </p>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-500">
+                    {{ quiz.number_of_questions }} Questions
+                  </span>
+                  <div class="space-x-3">
+                    <UButton color="primary" variant="ghost" size="lg">
+                      Edit
+                    </UButton>
+                    <UButton
+                      color="primary"
+                      variant="solid"
+                      size="lg"
+                      @click="takeQuiz(index)"
+                    >
+                      Take Quiz
+                    </UButton>
+                  </div>
                 </div>
               </div>
             </div>

@@ -113,6 +113,11 @@ async function sendQuizAttemptData() {
     console.error("Error submitting quiz attempt:", error);
   }
 }
+
+function goBack() {
+  questionsStore.forgetData();
+  router.push("/dashboard");
+}
 </script>
 
 <template>
@@ -143,15 +148,24 @@ async function sendQuizAttemptData() {
       <div v-if="!isQuizStarted" class="mx-2">
         <p class="text-green-500 mb-4 text-sm">Ready to take the quiz?</p>
         <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ title }}</h1>
-        <p class="text-gray-600 mb-1 text-sm">{{ description }}</p>
-        <p class="text-gray-600 mb-4 text-sm">{{ totalQuestions }} Questions</p>
+        <p class="text-gray-700 mb-2 text-sm">{{ description }}</p>
+        <p class="text-yellow-600 mb-4 text-sm">
+          {{ totalQuestions }} Questions
+        </p>
         <UButton
           color="primary"
+          size="md"
           block
           @click="questionsStore.setIsQuizStarted(true)"
+          class="mb-2"
         >
           Start
         </UButton>
+        <div class="flex justify-center">
+          <UButton color="primary" variant="link" @click="goBack">
+            Go back
+          </UButton>
+        </div>
       </div>
 
       <!-- Question Cards Section -->
