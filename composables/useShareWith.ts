@@ -1,9 +1,10 @@
-import axiosInstance from "~/utils/axois";
+import axiosInstance from "@/utils/axios";
 
 export const useShareWith = () => {
   interface User {
     id: number;
-    name: string;
+    first_name: string;
+    last_name: string;
     email: string;
   }
 
@@ -16,7 +17,7 @@ export const useShareWith = () => {
     loading.value = true;
 
     try {
-      const response = await axiosInstance.post("/user", {
+      const response = await axiosInstance.post("api/search-user", {
         search: searchQuery,
       });
 
@@ -60,3 +61,63 @@ export const useShareWith = () => {
     loadMoreUsers,
   };
 };
+
+export function handleShareModal(quiz_id: number) {
+  const toast = useToast();
+  const circleLoading = ref(false);
+  const isModalOpen = ref(false);
+  const selectedUsers = ref([]);
+
+  function handleUpdateShareWith(users: any) {
+    selectedUsers.value = users;
+  }
+
+  async function shareAction() {
+    if (selectedUsers.value.length === 0) {
+      toast.add({
+        id: "noUsersSelected",
+        color: "yellow",
+        description: "Please select at least one user to share with.",
+      });
+      return;
+    }
+
+    try {
+      circleLoading.value = true;
+      const sharedWithUserIds = selectedUsers.value.map(
+        (user: { id: number }) => user.id
+      );
+      const response = await axiosInstance.post("/api/share-quiz", {
+        quiz_id: quiz_id,
+        shared_with_user_ids: sharedWithUserIds,
+      });
+
+      toast.add({
+        id: "shareSuccess",
+        color: "green",
+        description: response.data.message,
+      });
+    } catch (error: any) {
+      console.error(error);
+      toast.add({
+        id: "shareError",
+        color: "red",
+        description:
+          error.response?.data?.message || "Error sharing with users.",
+      });
+    } finally {
+      circleLoading.value = false;
+    }
+
+    isModalOpen.value = false;
+    await nextTick();
+  }
+
+  return {
+    circleLoading,
+    isModalOpen,
+    selectedUsers,
+    handleUpdateShareWith,
+    shareAction,
+  };
+}

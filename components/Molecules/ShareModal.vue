@@ -31,10 +31,10 @@ function emitShareQuiz() {
             variant="ghost"
             :padded="false"
             @click="isModalOpen = false"
-            ><UIcon name="i-ic-round-close" class="w-7 h-7" />
+            ><UIcon name="i-ic-round-close" class="w-5 h-5" />
           </UButton>
         </div>
-        <AtomsMultiSelectInput @update-share-with="emitUpdateShareWith" />
+        <AtomsMultipleSelectInput @update-share-with="emitUpdateShareWith" />
 
         <div class="mt-4 flex justify-end">
           <UButton

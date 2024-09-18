@@ -1,69 +1,46 @@
-import { defineStore } from "pinia";
+import type { Quiz } from "@/types/quiz";
 
-interface Question {
-  id: number;
-  quiz_id: number;
-  question: string;
-  correct_answer: string;
-  options: any[];
-}
-
-interface Summary {
-  index: number;
-  isCorrect: boolean;
-  questionShuffled: string[];
-  selectedIndex: number;
-  correctAnswerIndex: number;
-}
+type AnswerData = {
+  question_id: number;
+  option_id: number;
+};
 
 export const useTakeQuizStore = defineStore("take-quiz", {
   state: () => ({
-    id: -1,
-    title: "",
-    description: "",
-    totalQuestions: 0,
-    questions: [] as Question[],
-    summary: [] as Summary[],
-    totalScore: 0,
-
-    //Taking Quiz
-    isQuizStarted: false,
+    quiz_id: 0,
+    quiz_data: null as Quiz | null,
+    answer_data: [] as AnswerData[],
   }),
+
   actions: {
-    setQuestions(questions: Question[]) {
-      this.questions = questions;
+    setQuizId(quiz_id: number) {
+      this.quiz_id = quiz_id;
     },
-    setId(id: number) {
-      this.id = id;
+    setQuizData(quiz_data: Quiz) {
+      this.quiz_data = quiz_data;
     },
-    setTitle(title: string) {
-      this.title = title;
+    setAnswerData(
+      option: number,
+      question_id: number,
+      current_question: number
+    ) {
+      if (this.answer_data[current_question - 1]) {
+        this.answer_data[current_question - 1] = {
+          question_id: question_id,
+          option_id: option,
+        };
+      } else {
+        this.answer_data.push({
+          question_id: question_id,
+          option_id: option,
+        });
+      }
     },
-    setDescription(description: string) {
-      this.description = description;
-    },
-    setNumberQuestions(numberOfQuestions: number) {
-      this.totalQuestions = numberOfQuestions;
-    },
-    setSummary(scoreData: Summary[]) {
-      this.summary = scoreData;
-    },
-    setTotalScore(totalScore: number) {
-      this.totalScore = totalScore;
-    },
-    setIsQuizStarted(isStarted: boolean) {
-      this.isQuizStarted = isStarted;
-    },
+
     forgetData() {
-      this.questions = [];
-      this.id = -1;
-      this.title = "";
-      this.description = "";
-      this.totalQuestions = 0;
-      this.totalScore = 0;
-      this.summary = [];
-      this.isQuizStarted = false;
+      this.quiz_id = 0;
+      this.quiz_data = null;
+      this.answer_data = [];
     },
   },
-  persist: true, // Enable persistence
 });

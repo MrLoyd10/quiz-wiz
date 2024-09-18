@@ -1,31 +1,25 @@
-import { useAuthStore } from "~/stores/auth";
+import { useAuthStore } from "@/stores/auth";
+import { useAuthManager } from "@/composables/useAuthManager";
+import { useHomeStore } from "@/stores/home";
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   const authStore = useAuthStore();
+  const authManager = useAuthManager();
+  const homeStore = useHomeStore();
 
-  // Paths that do not require authentication
-  const publicPaths = ["/login", "/signup", "/"];
+  const publicPaths = ["/login", "/register", "/"];
 
-  // Check if the user is authenticated based on presence of token and user data
-  const hasTokenAndUserData = !!(authStore.token && authStore.user);
-
-  // If the user has token and user data, validate the token
-  if (hasTokenAndUserData) {
-    try {
-      await authStore.checkToken(); // Attempt to validate the token with the server
-    } catch (error: any) {
-      authStore.logout(); // Invalidate the session if token check fails
-      return navigateTo("/login"); // Redirect to login
-    }
-  }
+  const isAuthenticated = await authManager.checkUser();
 
   // If the user is authenticated, redirect them away from public paths
-  if (hasTokenAndUserData && publicPaths.includes(to.path)) {
-    return navigateTo("/dashboard");
+  if (isAuthenticated && publicPaths.includes(to.path)) {
+    return navigateTo("/home");
   }
 
   // If the user is not authenticated and tries to access a protected route
-  if (!hasTokenAndUserData && !publicPaths.includes(to.path)) {
+  if (!isAuthenticated && !publicPaths.includes(to.path)) {
+    authStore.forgetUser();
+    homeStore.forgetTab();
     return navigateTo("/login");
   }
 });
