@@ -1,4 +1,5 @@
 import axiosInstance from "@/utils/axios";
+import { useAuthStore } from "@/stores/auth";
 
 export const useShareWith = () => {
   interface User {
@@ -66,7 +67,8 @@ export function handleShareModal(quiz_id: number) {
   const toast = useToast();
   const circleLoading = ref(false);
   const isModalOpen = ref(false);
-  const selectedUsers = ref([]);
+  const selectedUsers = ref([] as any[]);
+  const authStore = useAuthStore();
 
   function handleUpdateShareWith(users: any) {
     selectedUsers.value = users;
@@ -78,6 +80,18 @@ export function handleShareModal(quiz_id: number) {
         id: "noUsersSelected",
         color: "yellow",
         description: "Please select at least one user to share with.",
+      });
+      return;
+    }
+
+    if (
+      selectedUsers.value.length === 1 &&
+      selectedUsers.value[0].id === authStore.id
+    ) {
+      toast.add({
+        id: "selfShare",
+        color: "yellow",
+        description: "You cannot only share it with yourself.",
       });
       return;
     }

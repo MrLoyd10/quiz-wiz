@@ -1,38 +1,24 @@
 <script setup lang="ts">
-definePageMeta({
-  middleware: ["view-all-attempts"],
-});
-
-import { useViewAllAttempt } from "@/composables/useViewAllAttempt";
-import { useViewAllAttemptStore } from "@/stores/view-all-attempt";
+import { useViewMyAttempt } from "@/composables/useViewMyAttempt";
 import { useAttemptStore } from "@/stores/attempt";
-import type { QuizDetails } from "@/types/quiz";
-import type { AttemptDetails } from "@/types/view-all-attempt";
+import type { MyAttempt } from "@/types/my-attempts";
 import Loading from "vue-loading-overlay";
 import "vue-loading-overlay/dist/css/index.css";
 
-const viewAllAttempt = useViewAllAttempt();
-const viewAllAttemptStore = useViewAllAttemptStore();
+const viewMyAttempt = useViewMyAttempt();
 const attemptStore = useAttemptStore();
 const router = useRouter();
-const quizDetails = ref<QuizDetails | null>(null);
-const attemptDetails = ref<AttemptDetails[] | null>(null);
-const deleteAttemptData = ref({
-  id: 0,
-  openModal: false,
-});
+const myAttemptsDetails = ref<MyAttempt[] | null>(null);
 const isLoading = ref(true);
+const isClient = ref(false); // To fix dehydration error
 
 onMounted(async () => {
-  const result = await viewAllAttempt.getDetails(
-    viewAllAttemptStore.quiz_id,
-    isLoading
-  );
+  isClient.value = true;
+  const result = await viewMyAttempt.getDetails(isLoading);
   // Encountered error
   if (!result) return;
   // Success
-  quizDetails.value = result.quiz;
-  attemptDetails.value = result.attempts;
+  myAttemptsDetails.value = result.my_attempts;
 });
 
 const columns = [
@@ -42,8 +28,8 @@ const columns = [
     sortable: true,
   },
   {
-    key: "name",
-    label: "Name",
+    key: "quiz_title",
+    label: "Quiz Title",
     sortable: true,
   },
   {
@@ -67,12 +53,12 @@ const columns = [
 ];
 
 const people = computed(() => {
-  if (!attemptDetails.value || !quizDetails.value) return [];
+  if (!myAttemptsDetails.value) return [];
 
-  return attemptDetails.value.map((attempt, index) => ({
+  return myAttemptsDetails.value.map((attempt, index) => ({
     attempt_id: attempt.id,
     id: index + 1,
-    name: `${attempt.user.last_name}, ${attempt.user.first_name}`,
+    quiz_title: attempt.quiz.title,
     date_time: new Date(attempt.created_at).toLocaleString(undefined, {
       year: "numeric",
       month: "2-digit",
@@ -82,7 +68,7 @@ const people = computed(() => {
       hour12: true, // Toggle between 12-hour (true) and 24-hour (false)
     }),
     score: attempt.score,
-    out_of: quizDetails.value?.questions_count,
+    out_of: attempt.quiz.questions_count,
   }));
 });
 
@@ -92,18 +78,7 @@ const viewAttempt = (attempt_id: number) => {
   router.push("/attempt-result");
 };
 
-const deleteAttempt = (attempt_id: number) => {
-  deleteAttemptData.value.id = attempt_id;
-  deleteAttemptData.value.openModal = true;
-};
-
-const onConfirmDelete = (attempt_id: number) => {
-  attemptDetails.value =
-    attemptDetails.value?.filter((attempt) => attempt.id !== attempt_id) || [];
-};
-
 function goBack() {
-  viewAllAttemptStore.forgetData();
   attemptStore.forgetData();
 }
 </script>
@@ -111,7 +86,7 @@ function goBack() {
 <template>
   <div>
     <div class="min-h-screen flex flex-col px-4 mb-4 vl-parent">
-      <div v-if="isLoading">
+      <div v-if="isClient">
         <loading v-model:active="isLoading" is-full-page :opacity="0.2" />
       </div>
 
@@ -122,9 +97,7 @@ function goBack() {
       <div class="flex-grow container mx-auto">
         <div class="mb-6">
           <div class="flex justify-between items-center">
-            <h1 class="p-2 text-2xl font-semibold text-pretty">
-              {{ quizDetails?.title }}
-            </h1>
+            <h1 class="p-2 text-2xl font-semibold text-pretty">My Attempts</h1>
             <NuxtLink to="/home">
               <UButton
                 color="black"
@@ -147,32 +120,16 @@ function goBack() {
           }"
         >
           <template #action-data="{ row }">
-            <div class="space-x-2">
-              <UButton
-                color="green"
-                variant="soft"
-                size="2xs"
-                class="px-2"
-                @click="viewAttempt(row.attempt_id)"
-                >View</UButton
-              >
-              <UButton
-                color="red"
-                variant="soft"
-                size="2xs"
-                class="px-2"
-                @click="deleteAttempt(row.attempt_id)"
-                >Delete</UButton
-              >
-            </div>
+            <UButton
+              color="green"
+              variant="soft"
+              size="2xs"
+              class="px-2"
+              @click="viewAttempt(row.attempt_id)"
+              >View</UButton
+            >
           </template>
         </UTable>
-
-        <MoleculesDeleteConfirmation
-          v-model="deleteAttemptData.openModal"
-          :attempt-id="deleteAttemptData.id"
-          @confirmDelete="onConfirmDelete"
-        />
       </div>
     </div>
   </div>

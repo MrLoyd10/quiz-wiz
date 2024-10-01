@@ -7,7 +7,7 @@ const isAttemptsActive = route.path === "/my-attempts";
 
 <template>
   <div>
-    <nav class="flex space-x-6">
+    <nav class="flex flex-col space-y-0 sm:space-x-6 sm:flex-row">
       <AtomsMenuItem :is-active="isHomeActive" go-to="/home"
         >Home</AtomsMenuItem
       >

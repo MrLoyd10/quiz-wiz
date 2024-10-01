@@ -18,7 +18,31 @@ export function useSharedQuizManager() {
     }
   };
 
+  const getPersonAlreadyShared = async (quizId: number) => {
+    try {
+      const response = await axiosInstance.get(`/api/quiz/${quizId}/shares`);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
+
+  const unshare = async (sharedQuizId: number) => {
+    try {
+      const response = await axiosInstance.delete(
+        `/api/quiz/${sharedQuizId}/unshare`
+      );
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
+
   return {
     getQuizDetails,
+    getPersonAlreadyShared,
+    unshare,
   };
 }

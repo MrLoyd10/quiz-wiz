@@ -63,5 +63,28 @@ export function useTakeQuizManager() {
     }
   }
 
-  return { getQuizQuestions, shuffleArray, submitAttemptAnswer };
+  const checkIfAlreadyAttempted = async (
+    isLoading: Ref<boolean>,
+    quizId: number
+  ) => {
+    try {
+      isLoading.value = true;
+      const response = await axiosInstance.get(
+        `/api/quiz/attempt/check/${quizId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  return {
+    getQuizQuestions,
+    shuffleArray,
+    submitAttemptAnswer,
+    checkIfAlreadyAttempted,
+  };
 }

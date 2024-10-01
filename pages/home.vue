@@ -12,7 +12,7 @@ const handleTabChange = (newTab: boolean) => {
 
 <template>
   <div>
-    <div class="min-h-screen flex flex-col">
+    <div class="min-h-screen flex flex-col px-4 mb-4">
       <div class="container mx-auto">
         <OrganismsAccountHeader />
       </div>

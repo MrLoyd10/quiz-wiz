@@ -75,6 +75,7 @@ const handleDropdownClick = (event: Event) => {
     <MoleculesShareModal
       v-model="isModalOpen"
       :shareWith="selectedUsers"
+      :quiz-id="props.quiz_id"
       @update-share-with="handleUpdateShareWith"
       @share="shareAction"
     />

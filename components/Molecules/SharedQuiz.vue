@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { useSharedQuizManager } from "@/composables/useSharedQuizManager";
+import { useTakeQuizManager } from "@/composables/useTakeQuizManager";
 import { useTakeQuizStore } from "~/stores/take-quiz";
 import type { SharedQuizDetails } from "@/types/shared-quiz";
+import { useAttemptStore } from "@/stores/attempt";
+import Loading from "vue-loading-overlay";
+import "vue-loading-overlay/dist/css/index.css";
 
 const sharedQuizManager = useSharedQuizManager();
+const takeQuizManager = useTakeQuizManager();
 const takeQuizStore = useTakeQuizStore();
+const attemptStore = useAttemptStore();
 const router = useRouter();
 const isLoading = ref(false);
+const circleLoading = ref(false);
 const sharedQuizDetails = ref<SharedQuizDetails[] | null>(null);
 
 onMounted(async () => {
@@ -17,18 +24,32 @@ onMounted(async () => {
   sharedQuizDetails.value = response.shared_quizzes;
 });
 
-const takeQuiz = (quizId: number) => {
-  takeQuizStore.forgetData();
-  // Save the quiz id
-  takeQuizStore.setQuizId(quizId);
-  // Redirect to the quiz page
-  router.push(`/take-quiz`);
+const takeQuiz = async (quizId: number) => {
+  const res = await takeQuizManager.checkIfAlreadyAttempted(
+    circleLoading,
+    quizId
+  );
+  if (res.canAttempt) {
+    takeQuizStore.forgetData();
+    // Save the quiz id
+    takeQuizStore.setQuizId(quizId);
+    // Redirect to the quiz page
+    router.push(`/take-quiz`);
+  } else {
+    attemptStore.forgetData();
+    attemptStore.setAttemptId(res.attempt_id);
+    router.push("/attempt-result");
+  }
 };
 </script>
 
 <template>
   <div>
-    <div class="flex flex-col space-y-5 px-4 pt-4">
+    <div class="flex flex-col space-y-5 px-4 pt-4 vl-parent">
+      <div v-if="circleLoading">
+        <loading v-model:active="circleLoading" is-full-page :opacity="0.2" />
+      </div>
+
       <!-- Skeleton Loading -->
       <div v-if="isLoading" v-for="i in 5" :key="i">
         <SkeletonQuizCard />
