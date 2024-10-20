@@ -5,16 +5,20 @@
 import axiosInstance from "@/utils/axios";
 
 export function useSharedQuizManager() {
-  const getQuizDetails = async (isLoading: Ref<boolean>) => {
+  const getQuizDetails = async (isLoading?: Ref<boolean>) => {
     try {
-      isLoading.value = true;
+      if (isLoading) {
+        isLoading.value = true;
+      }
       const response = await axiosInstance.get("/api/get-shared-quizzes");
       return response.data;
     } catch (error) {
       console.error(error);
       return null;
     } finally {
-      isLoading.value = false;
+      if (isLoading) {
+        isLoading.value = false;
+      }
     }
   };
 

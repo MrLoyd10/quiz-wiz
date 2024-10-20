@@ -1,18 +1,32 @@
 <script setup lang="ts">
 import { useQuizManager } from "@/composables/useQuizManager";
-import { useTakeQuizStore } from "~/stores/take-quiz";
+import { useRefetch } from "@/stores/refetch";
 import type { QuizDetails } from "@/types/quiz";
+import { useTakeQuizStore } from "~/stores/take-quiz";
 
 const quizManager = useQuizManager();
 const takeQuizStore = useTakeQuizStore();
 const router = useRouter();
 const isLoading = ref(false);
 const quizDetails = ref<QuizDetails[] | null>(null);
+const refetch = useRefetch();
 
-onMounted(async () => {
+const fetchData = async () => {
   const response = await quizManager.getQuizDetails(isLoading);
   if (response) {
     quizDetails.value = response.quizzes;
+  }
+};
+
+onMounted(() => {
+  fetchData();
+});
+
+watch(refetch, (newValue) => {
+  if (newValue) {
+    fetchData();
+
+    refetch.setRefetch(false);
   }
 });
 
@@ -46,8 +60,8 @@ const takeQuiz = (quizId: number) => {
           @click="takeQuiz(quiz.id)"
         />
       </div>
-      <div v-else class="flex h-28 justify-center items-center">
-        <p class="italic text-i-font-500">No quizzes have been added yet.</p>
+      <div v-else class="flex justify-center items-center h-28">
+        <p class="text-i-font-500 italic">No quizzes have been added yet.</p>
       </div>
     </div>
   </div>

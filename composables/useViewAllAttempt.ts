@@ -16,7 +16,25 @@ export const useViewAllAttempt = () => {
     }
   };
 
+  async function handleDeleteAttempt(attempt_id: number) {
+    const toast = useToast();
+    try {
+      const response = await axiosInstance.delete(
+        `/api/view-all-attempts/${attempt_id}`
+      );
+    } catch (error: any) {
+      console.error(error);
+      toast.add({
+        id: "deleteError",
+        color: "red",
+        description:
+          error.response?.data?.message || "Error deleting the attempt.",
+      });
+    }
+  }
+
   return {
     getDetails,
+    handleDeleteAttempt,
   };
 };

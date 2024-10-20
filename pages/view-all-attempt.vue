@@ -4,8 +4,8 @@ definePageMeta({
 });
 
 import { useViewAllAttempt } from "@/composables/useViewAllAttempt";
-import { useViewAllAttemptStore } from "@/stores/view-all-attempt";
 import { useAttemptStore } from "@/stores/attempt";
+import { useViewAllAttemptStore } from "@/stores/view-all-attempt";
 import type { QuizDetails } from "@/types/quiz";
 import type { AttemptDetails } from "@/types/view-all-attempt";
 import Loading from "vue-loading-overlay";
@@ -23,7 +23,7 @@ const deleteAttemptData = ref({
 });
 const isLoading = ref(true);
 
-onMounted(async () => {
+const fetchData = async () => {
   const result = await viewAllAttempt.getDetails(
     viewAllAttemptStore.quiz_id,
     isLoading
@@ -33,7 +33,15 @@ onMounted(async () => {
   // Success
   quizDetails.value = result.quiz;
   attemptDetails.value = result.attempts;
+};
+
+onMounted(() => {
+  fetchData();
 });
+
+const refresh = () => {
+  fetchData();
+};
 
 const columns = [
   {
@@ -100,6 +108,8 @@ const deleteAttempt = (attempt_id: number) => {
 const onConfirmDelete = (attempt_id: number) => {
   attemptDetails.value =
     attemptDetails.value?.filter((attempt) => attempt.id !== attempt_id) || [];
+  console.log("Delete", attempt_id);
+  viewAllAttempt.handleDeleteAttempt(attempt_id);
 };
 
 function goBack() {
@@ -110,19 +120,19 @@ function goBack() {
 
 <template>
   <div>
-    <div class="min-h-screen flex flex-col px-4 mb-4 vl-parent">
+    <div class="flex flex-col mb-4 px-4 min-h-screen vl-parent">
       <div v-if="isLoading">
         <loading v-model:active="isLoading" is-full-page :opacity="0.2" />
       </div>
 
-      <div class="container mx-auto">
+      <div class="mx-auto container">
         <OrganismsAccountHeader />
       </div>
 
-      <div class="flex-grow container mx-auto">
-        <div class="mb-6">
+      <div class="flex-grow mx-auto container">
+        <div class="mb-3">
           <div class="flex justify-between items-center">
-            <h1 class="p-2 text-2xl font-semibold text-pretty">
+            <h1 class="p-2 font-semibold text-2xl text-pretty">
               {{ quizDetails?.title }}
             </h1>
             <NuxtLink to="/home">
@@ -136,6 +146,16 @@ function goBack() {
             </NuxtLink>
           </div>
           <hr />
+        </div>
+        <div class="flex justify-end mb-3">
+          <UButton
+            color="blue"
+            variant="outline"
+            size="2xs"
+            icon="i-heroicons-arrow-path"
+            @click="refresh"
+            >Refresh</UButton
+          >
         </div>
 
         <UTable

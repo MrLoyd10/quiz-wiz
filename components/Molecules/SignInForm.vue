@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { validateLogin } from "@/zod/validation/authValidation";
 import { useAuthManager } from "@/composables/useAuthManager";
+import { validateLogin } from "@/zod/validation/authValidation";
 import Loading from "vue-loading-overlay";
 import "vue-loading-overlay/dist/css/index.css";
 
@@ -10,6 +10,7 @@ const password = ref("");
 const authManager = useAuthManager();
 const router = useRouter();
 const circleLoading = ref(false);
+const toast = useToast();
 
 const signIn = async () => {
   try {
@@ -18,8 +19,13 @@ const signIn = async () => {
     // send to backend
     await authManager.login(email.value, password.value, circleLoading);
     router.push("/home");
-  } catch (error) {
-    console.error(error);
+  } catch (error: any) {
+    toast.add({
+      id: "login-error",
+      title: "Login Failed",
+      description: error.message || "Hmm. Something went wrong.",
+      color: "red",
+    });
   }
 };
 </script>

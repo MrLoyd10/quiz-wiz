@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useViewAllAttemptStore } from "@/stores/view-all-attempt";
+import { useDeleteQuiz } from "@/composables/useDeleteQuiz";
 import { handleShareModal } from "@/composables/useShareWith";
+import { useViewAllAttemptStore } from "@/stores/view-all-attempt";
 import Loading from "vue-loading-overlay";
 import "vue-loading-overlay/dist/css/index.css";
 
@@ -14,6 +15,15 @@ const props = defineProps({
 const router = useRouter();
 const viewAllAttemptStore = useViewAllAttemptStore();
 
+// Delete
+const {
+  isDeleteModalOpen,
+  circleLoading: deleteLoading,
+  handleDeleteQuiz,
+  handleCancelDelete,
+} = useDeleteQuiz();
+
+// Share
 const {
   isModalOpen,
   selectedUsers,
@@ -44,7 +54,7 @@ const items = [
       label: "Delete",
       icon: "i-heroicons-trash-20-solid",
       click: () => {
-        console.log("Delete");
+        isDeleteModalOpen.value = true;
       },
     },
   ],
@@ -71,6 +81,10 @@ const handleDropdownClick = (event: Event) => {
       <loading v-model:active="circleLoading" is-full-page :opacity="0.2" />
     </div>
 
+    <div v-if="deleteLoading">
+      <loading v-model:active="deleteLoading" is-full-page :opacity="0.2" />
+    </div>
+
     <!-- Share Modal -->
     <MoleculesShareModal
       v-model="isModalOpen"
@@ -78,6 +92,13 @@ const handleDropdownClick = (event: Event) => {
       :quiz-id="props.quiz_id"
       @update-share-with="handleUpdateShareWith"
       @share="shareAction"
+    />
+
+    <!-- Delete Confirmation Modal -->
+    <MoleculesDeleteConfirmationModal
+      v-model="isDeleteModalOpen"
+      @cancel="handleCancelDelete"
+      @confirm="() => handleDeleteQuiz(props.quiz_id)"
     />
 
     <div

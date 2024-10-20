@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { useSharedQuizManager } from "@/composables/useSharedQuizManager";
 import { useTakeQuizManager } from "@/composables/useTakeQuizManager";
-import { useTakeQuizStore } from "~/stores/take-quiz";
-import type { SharedQuizDetails } from "@/types/shared-quiz";
 import { useAttemptStore } from "@/stores/attempt";
+import type { SharedQuizDetails } from "@/types/shared-quiz";
 import Loading from "vue-loading-overlay";
 import "vue-loading-overlay/dist/css/index.css";
+import { useTakeQuizStore } from "~/stores/take-quiz";
 
 const sharedQuizManager = useSharedQuizManager();
 const takeQuizManager = useTakeQuizManager();
@@ -16,12 +16,34 @@ const isLoading = ref(false);
 const circleLoading = ref(false);
 const sharedQuizDetails = ref<SharedQuizDetails[] | null>(null);
 
-onMounted(async () => {
-  const response = await sharedQuizManager.getQuizDetails(isLoading);
+const fetchData = async (isInitialFetch = false) => {
+  const response = await sharedQuizManager.getQuizDetails(
+    isInitialFetch ? isLoading : undefined
+  );
+
   // Error encountered
   if (!response) return;
   // Success
   sharedQuizDetails.value = response.shared_quizzes;
+};
+
+let intervalId: ReturnType<typeof setInterval> | undefined;
+
+onMounted(async () => {
+  // Initial fetch
+  fetchData(true);
+
+  // Set an interval to refetch every 10 seconds
+  intervalId = setInterval(() => {
+    fetchData();
+  }, 5000); // 5 seconds
+});
+
+// Clean up the interval when the component is unmounted
+onBeforeUnmount(() => {
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
 });
 
 const takeQuiz = async (quizId: number) => {
@@ -69,8 +91,8 @@ const takeQuiz = async (quizId: number) => {
           @click="takeQuiz(quiz.quiz.id)"
         />
       </div>
-      <div v-else class="flex h-28 justify-center items-center">
-        <p class="italic text-i-font-500">
+      <div v-else class="flex justify-center items-center h-28">
+        <p class="text-i-font-500 italic">
           You haven't received any shared quizzes.
         </p>
       </div>

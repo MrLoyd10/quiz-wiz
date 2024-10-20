@@ -1,15 +1,17 @@
 <template>
   <div>
-    <div class="mt-8 space-x-4">
-      <UButton color="primary" variant="solid" class="px-6 py-3 shadow"
+    <div class="space-x-4 mt-8">
+      <UButton color="primary" variant="solid" class="shadow px-6 py-3"
         >Download CV</UButton
       >
-      <UButton
-        color="gray"
-        variant="outline"
-        class="px-6 py-3 hover:bg-gray-100"
-        >Let's get started</UButton
-      >
+      <NuxtLink to="/register">
+        <UButton
+          color="gray"
+          variant="outline"
+          class="hover:bg-gray-100 px-6 py-3"
+          >Let's get started</UButton
+        >
+      </NuxtLink>
     </div>
   </div>
 </template>
