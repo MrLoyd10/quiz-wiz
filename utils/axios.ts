@@ -1,9 +1,12 @@
-import axios from "axios";
 import type { AxiosInstance } from "axios";
+import axios from "axios";
 import { useAuthStore } from "~/stores/auth";
 
+const apiBaseUrl: string =
+  (process.env.API_BASE_URL || "http://127.0.0.1:8000") + "/api";
+
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: "http://127.0.0.1:8000", // Replace with your API base URL
+  baseURL: apiBaseUrl,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
