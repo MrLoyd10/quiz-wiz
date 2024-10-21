@@ -2,8 +2,7 @@ import type { AxiosInstance } from "axios";
 import axios from "axios";
 import { useAuthStore } from "~/stores/auth";
 
-const apiBaseUrl: string =
-  (process.env.API_BASE_URL || "http://127.0.0.1:8000") + "/api";
+const apiBaseUrl: string = "http://127.0.0.1:8000";
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: apiBaseUrl,
